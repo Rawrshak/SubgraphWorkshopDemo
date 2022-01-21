@@ -1,0 +1,45 @@
+# 1. Define the Entities
+  # - Optional VS Required Fields 
+    #   - Each entity must have and 'id' field, which is of type 'ID!'' (string). The id field servers as the primary key, 
+    #     and needs to be unique among all entities of the same type
+    # - There are built-in scalar types
+    #   - Bytes, ID, String, Boolean, Int, BigInt, and BigDecimal
+    #   - BigInt is used for ethereum's uint32 until uint256. Everyhing smaller than uint32, can be represented as i32
+    #   - BigDecimal has high precision decimals represented as a significand and an exponent. Exponent range is from -6143-6144, rounded to nearest 34 significant digits
+    # - Enums
+    # - Entity Relationships 
+    #   One-to-one, One-to-Many, and Many-to-Many
+
+type Content @entity {
+  id: ID! 
+  "One-to-Many relationship, one user can own many contracts"
+  # Example of reverse look up - in this case, the graph can automatically figure out that when a content set's its 'owner' field with the 
+      # user's 'id', it will automatically add the content entity to the the user's ownedContents field, which in this case is an array."
+  assets: [Asset!] @derivedFrom(field: "parent")
+}
+
+type User @entity {
+  id: ID!
+  "Many-to-Many relationship, user has many assets, and an asset has many instanced owners"
+  # ownedAssets: [Asset!] 
+  assets: [AssetBalance!] @derivedFrom(field: "owner")
+}
+
+type Asset @entity {
+  id: ID!
+  tokenId: BigInt!
+  parent: Content!
+  currentSupply: BigInt!
+  maxSupply: BigInt!
+  # owners: [User!] @derivedFrom(field: "ownedAsset")
+  "Upgrade to"
+  owners: [AssetBalance!] @derivedFrom(field: "asset")
+}
+
+"However, a more performat way is to store this relationship as an entity of itself"
+type AssetBalance @entity {
+  id: ID!
+  owner: User!
+  asset: Asset!
+  amount: BigInt!
+}
